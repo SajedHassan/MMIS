@@ -19,7 +19,7 @@ from lib.initialize_optimization import init_optimization
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--config", type=str, default='configs/params_lidc.yaml', help="config path (*.yaml)")
+    parser.add_argument("--config", type=str, default='/Users/sajedalmorsy/Academic/Masters/thesis/D-Persona/D-Persona/code/configs/params_task2.yaml', help="config path (*.yaml)")
     parser.add_argument("--save_path", type=str, help="save path", default='')
     parser.add_argument("--model_name", type=str, default='DPersona')
     parser.add_argument("--epochs", type=int, default=100)
@@ -50,7 +50,8 @@ def main():
     logger = Logger(args.model_name, path=opt.MODEL_DIR)
     writer = SummaryWriter(opt.MODEL_DIR)
 
-    shutil.copytree('../code/', opt.MODEL_DIR + '/code/', shutil.ignore_patterns(['.git','__pycache__']))
+    code_dir = '/Users/sajedalmorsy/Academic/Masters/thesis/D-Persona/D-Persona/code/'
+    shutil.copytree(code_dir, opt.MODEL_DIR + '/code/', shutil.ignore_patterns(['.git','__pycache__']))
 
     # dataset
     data_spliter = DatasetSpliter(opt=opt, input_size=opt.INPUT_SIZE)

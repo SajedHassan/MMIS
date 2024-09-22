@@ -1,9 +1,9 @@
-DATA_PATH: '../../dataset/'
+DATA_PATH: '/Users/sajedalmorsy/Academic/Masters/thesis/D-Persona/dataset/NPC'
 DATASET: 'NPC'
 
 RANDOM_SEED: 1337
 
-MODEL_DIR: '../models/'
+MODEL_DIR: '/Users/sajedalmorsy/Academic/Masters/thesis/D-Persona/D-Persona/models/'
 
 INPUT_CHANNEL: 3
 OUTPUT_CHANNEL: 1

@@ -132,7 +132,7 @@ def evaluate(net, test_loader, opt, args, result_path):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", type=str, default='./configs/params_npc.yaml', help="config path (*.yaml)")
-    parser.add_argument("--save_path", type=str, default='../models/DPersona2_NPC_20240319-152059//', help="save path")
+    parser.add_argument("--save_path", type=str, default='../models/DPersona2_TASK2_20240319-152059//', help="save path")
     parser.add_argument("--test_num", type=int, default=10)
     parser.add_argument("--model_name", type=str, default='DPersona')
     parser.add_argument("--gpu", type=str, default='0')

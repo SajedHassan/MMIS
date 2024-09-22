@@ -13,20 +13,22 @@ from configs.config import *
 from evaluate_dp_npc import validate
 from utils.logger import Logger
 from utils.utils import rand_seed
-from dataloader.dataset import RandomGenerator_Multi_Rater, BaseDataSets, ZoomGenerator
+from dataloader.dataset_task2 import RandomGenerator_Multi_Rater, BaseDataSets, ZoomGenerator
 from torch.utils.data import DataLoader
 from lib.initialize_model import init_model
 from lib.initialize_optimization import init_optimization
 
-config_path = '/Users/sajedalmorsy/Academic/Masters/thesis/D-Persona/D-Persona/code/configs/params_npc.yaml'
+config_path = '/Users/sajedalmorsy/Academic/Masters/thesis/D-Persona/D-Persona/code/configs/params_task2.yaml'
 opt = Config(config_path=config_path)
 
 def worker_init_fn(worker_id):
     return random.seed(opt.RANDOM_SEED + worker_id)
 
+def collate(x):
+    return x
+
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--config", type=str, default='/Users/sajedalmorsy/Academic/Masters/thesis/D-Persona/D-Persona/code/configs/params_npc.yaml', help="config path (*.yaml)")
     parser.add_argument("--save_path", type=str, help="save path", default='')
     parser.add_argument("--model_name", type=str, default='DPersona')
     parser.add_argument("--epochs", type=int, default=200)
@@ -40,7 +42,7 @@ def main():
     parser.add_argument("--RESUME_FROM", type=int, default=0)
 
     args = parser.parse_args()
-    
+
     os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
     rand_seed(opt.RANDOM_SEED)
 
@@ -56,7 +58,8 @@ def main():
     logger = Logger(args.model_name, path=opt.MODEL_DIR)
     writer = SummaryWriter(opt.MODEL_DIR)
 
-    shutil.copytree('/Users/sajedalmorsy/Academic/Masters/thesis/D-Persona/D-Persona/code/', opt.MODEL_DIR + '/code/', shutil.ignore_patterns(['.git','__pycache__']))
+    code_dir = '/Users/sajedalmorsy/Academic/Masters/thesis/D-Persona/D-Persona/code/'
+    shutil.copytree(code_dir, opt.MODEL_DIR + '/code/', shutil.ignore_patterns(['.git','__pycache__']))
 
      # dataset
     db_train = BaseDataSets(
@@ -71,8 +74,8 @@ def main():
         transform=ZoomGenerator(opt.PATCH_SIZE)
     )
 
-    train_loader = DataLoader(db_train, batch_size=opt.TRAIN_BATCHSIZE, shuffle=True, num_workers=8, pin_memory=True, worker_init_fn=worker_init_fn)
-    val_loader = DataLoader(db_val, batch_size=opt.VAL_BATCHSIZE, shuffle=True, num_workers=1)
+    train_loader = DataLoader(db_train, batch_size=opt.TRAIN_BATCHSIZE, shuffle=True, num_workers=8, pin_memory=True, worker_init_fn=worker_init_fn, collate_fn=collate)
+    val_loader = DataLoader(db_val, batch_size=opt.VAL_BATCHSIZE, shuffle=True, num_workers=1, collate_fn=collate)
 
     # Training Config
     epochs = args.epochs
@@ -93,7 +96,7 @@ def main():
         epoch_start = args.RESUME_FROM
 
     if args.stage == 2:
-        ckpt = torch.load(os.path.join('./DPersona1_npc_best.pth'))
+        ckpt = torch.load(os.path.join('./DPersona1_TASK2_best.pth'))
         net.load_state_dict(ckpt['model'], strict=False)
 
     net.to('mps')
@@ -105,25 +108,40 @@ def main():
         print_str = '-------epoch {}/{}-------'.format(epoch+1, epochs)
         logger.write_and_print(print_str)
 
-        for step, sample in enumerate(tqdm(train_loader)):
+        total_step = 0
+        for _step, samples in enumerate(tqdm(train_loader)):
+            flattended_samples = [slice for sample in samples for slice in sample]
+            batch_size = 12
+            for i in range(0, len(flattended_samples), batch_size):
+                if (i % 10 == 0):
+                    print('Step: {} - Batch: {}/{}'.format(_step, i, len(flattended_samples)))
+                if i+batch_size >= len(flattended_samples):
+                    continue
+                samples_patch = flattended_samples[i:i+batch_size]
+                images = [sample['image'] for sample in samples_patch]
+                labels = [sample['label'] for sample in samples_patch]
 
-            patch = sample['image'].to('mps')
-            mask = sample['label'].to('mps')
+                images = torch.stack(images, dim=0)
+                labels = torch.stack(labels, dim=0)
 
-            # prepare data
-            batches_done = len(train_loader) * epoch + step
-            optimizer.zero_grad()
+                patch = images.to('mps')
+                mask = labels.to('mps')
 
-            loss, _ = net.train_step(args, patch, mask, loss_fct, stage=args.stage)
+                # prepare data
+                batches_done = len(train_loader) * epoch + total_step
+                optimizer.zero_grad()
 
-            if torch.isnan(loss):
-                logger.write_and_print('***** Warning: loss is NaN *****')
-                loss = torch.tensor(10000).to('mps')
+                loss, _ = net.train_step(args, patch, mask, loss_fct, stage=args.stage)
 
-            loss.backward()
-            optimizer.step()
+                if torch.isnan(loss):
+                    logger.write_and_print('***** Warning: loss is NaN *****')
+                    loss = torch.tensor(10000.0, requires_grad=True).to('mps')
 
-            writer.add_scalar('Loss', loss.item(), batches_done)
+                loss.backward()
+                optimizer.step()
+
+                writer.add_scalar('Loss', loss.item(), batches_done)
+                total_step += 1
 
         # log learning_rate
         current_lr = optimizer.param_groups[0]['lr']

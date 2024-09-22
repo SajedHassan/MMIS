@@ -76,7 +76,8 @@ class GeneralizedDiceLoss(_AbstractDiceLoss):
         # GDL weighting: the contribution of each label is corrected by the inverse of its volume
         w_l = target.sum(-1)
         w_l = 1 / (w_l * w_l).clamp(min=self.epsilon)
-        w_l.requires_grad = False
+        # w_l.requires_grad = False
+        w_l = w_l.detach()
 
         intersect = (input * target).sum(-1)
         intersect = intersect * w_l
