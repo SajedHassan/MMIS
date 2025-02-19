@@ -12,28 +12,37 @@ from dataloader.dataset import BaseDataSets, ZoomGenerator
 from torch.utils.data import DataLoader
 from lib.initialize_model import init_model
 
-def validate(args, net, val_loader, opt, writer=None, times_step = 0):
+
+def validate(args, net, val_loader, opt, writer=None, times_step=0):
     GED_global, Dice_max_reverse, Dice_soft, Dice_match, Dice_each_mean = 0.0, 0.0, 0.0, 0.0, 0.0
 
     net.eval()
     with torch.no_grad():
         for val_step, sample in enumerate(tqdm(val_loader)):
 
-            patch = sample['image'].cuda()
-            masks = sample['label'].float()
+            sample = sample[0]
+
+            images = [sample['image']]
+            labels = [sample['label']]
+
+            images = torch.stack(images, dim=0)
+            labels = torch.stack(labels, dim=0)
+
+            patch = images.cuda()
+            masks = labels.float()
 
             preds = []
             for idx in range(patch.shape[2]):
                 if args.stage == 1:
-                    output_slice = net.val_step(patch[:,:,idx], sample_num = args.val_num)
+                    output_slice = net.val_step(patch[:, :, idx], sample_num=args.val_num)
                 elif args.stage == 2:
-                    output_slice = net.test_step(patch[:,:,idx], sample_num = args.val_num).unsqueeze(2)
+                    output_slice = net.test_step(patch[:, :, idx], sample_num=args.val_num).unsqueeze(2)
                 output_slice = torch.sigmoid(output_slice).cpu()
                 preds.append(output_slice)
             preds = torch.stack(preds, 2)
             # Dice score
             GED_iter = generalized_energy_distance(masks, preds)
-            _, dice_max_reverse_iter, dice_match_iter, dice_each_iter= dice_at_all(masks, preds, thresh=0.5)
+            _, dice_max_reverse_iter, dice_match_iter, dice_each_iter = dice_at_all(masks, preds, thresh=0.5)
             dice_soft_iter = dice_at_thresh(masks, preds)
 
             GED_global += GED_iter
@@ -44,12 +53,12 @@ def validate(args, net, val_loader, opt, writer=None, times_step = 0):
 
             index_z = preds.shape[2] // 2
             if opt.VISUALIZE:
-                concat_pred = show_img(patch[:,:,index_z], preds[:,:,index_z], masks[:,:,index_z])
+                concat_pred = show_img(patch[:, :, index_z], preds[:, :, index_z], masks[:, :, index_z])
                 cv2.imshow('predictions', concat_pred)
                 cv2.waitKey(0)
-            
+
             if writer is not None and val_step == len(val_loader) // 2:
-                concat_pred = show_img(patch[:,:,index_z], preds[:,:,index_z], masks[:,:,index_z])
+                concat_pred = show_img(patch[:, :, index_z], preds[:, :, index_z], masks[:, :, index_z])
                 writer.add_image('Images', concat_pred, times_step, dataformats='HW')
 
     # store in dict
@@ -61,8 +70,10 @@ def validate(args, net, val_loader, opt, writer=None, times_step = 0):
 
     return metrics_dict
 
+
 def evaluate(net, test_loader, opt, args, result_path):
-    GED_global, Dice_max, Dice_max_reverse, Dice_soft, Dice_match, Dice_each = 0.0, 0.0, 0.0, 0.0, 0.0, np.array([0.0] * 4)
+    GED_global, Dice_max, Dice_max_reverse, Dice_soft, Dice_match, Dice_each = 0.0, 0.0, 0.0, 0.0, 0.0, np.array(
+        [0.0] * 4)
 
     net.eval()
     with torch.no_grad():
@@ -74,17 +85,18 @@ def evaluate(net, test_loader, opt, args, result_path):
             preds = []
             for idx in range(patch.shape[2]):
                 if args.stage == 1:
-                    output_slice = net.val_step(patch[:,:,idx], sample_num = args.test_num)
+                    output_slice = net.val_step(patch[:, :, idx], sample_num=args.test_num)
                 elif args.stage == 2:
-                    output_slice = net.test_step(patch[:,:,idx], sample_num = args.test_num).unsqueeze(2)
+                    output_slice = net.test_step(patch[:, :, idx], sample_num=args.test_num).unsqueeze(2)
                 output_slice = output_slice.unsqueeze(2)
                 output_slice = torch.sigmoid(output_slice).cpu()
                 preds.append(output_slice)
             preds = torch.stack(preds, 2)
-            
+
             GED_iter = generalized_energy_distance(masks, preds)
             # Dice score
-            dice_max_iter, dice_max_reverse_iter, dice_match_iter, dice_each_iter= dice_at_all(masks, preds, thresh=0.5)
+            dice_max_iter, dice_max_reverse_iter, dice_match_iter, dice_each_iter = dice_at_all(masks, preds,
+                                                                                                thresh=0.5)
             dice_soft_iter = dice_at_thresh(masks, preds)
 
             GED_global += GED_iter
@@ -96,25 +108,36 @@ def evaluate(net, test_loader, opt, args, result_path):
 
             index_z = preds.shape[2] // 2
             if opt.VISUALIZE:
-                concat_pred = show_img(patch[:,:,index_z], preds[:,:,index_z], masks[:,:,index_z])
+                concat_pred = show_img(patch[:, :, index_z], preds[:, :, index_z], masks[:, :, index_z])
                 cv2.imshow('predictions', concat_pred)
                 cv2.waitKey(0)
-            
+
             if opt.TEST_SAVE:
                 patch = patch.cpu().numpy()
                 masks = masks.numpy()
                 preds = preds.numpy()
-                nib.save(nib.Nifti1Image(patch[0,0].astype(np.float32), np.eye(4)), result_path +  "%02d_image_t1.nii.gz" % test_step)
-                nib.save(nib.Nifti1Image(patch[0,1].astype(np.float32), np.eye(4)), result_path +  "%02d_image_t1c.nii.gz" % test_step)
-                nib.save(nib.Nifti1Image(patch[0,2].astype(np.float32), np.eye(4)), result_path +  "%02d_image_t2.nii.gz" % test_step)
-                nib.save(nib.Nifti1Image(masks[0,0].astype(np.float32), np.eye(4)), result_path +  "%02d_label_a1.nii.gz" % test_step)
-                nib.save(nib.Nifti1Image(masks[0,1].astype(np.float32), np.eye(4)), result_path +  "%02d_label_a2.nii.gz" % test_step)
-                nib.save(nib.Nifti1Image(masks[0,2].astype(np.float32), np.eye(4)), result_path +  "%02d_label_a3.nii.gz" % test_step)
-                nib.save(nib.Nifti1Image(masks[0,3].astype(np.float32), np.eye(4)), result_path +  "%02d_label_a4.nii.gz" % test_step)
-                nib.save(nib.Nifti1Image((preds[0,0]>0.5).astype(np.float32), np.eye(4)), result_path +  "%02d_pred_s1.nii.gz" % test_step)
-                nib.save(nib.Nifti1Image((preds[0,1]>0.5).astype(np.float32), np.eye(4)), result_path +  "%02d_pred_s2.nii.gz" % test_step)
-                nib.save(nib.Nifti1Image((preds[0,2]>0.5).astype(np.float32), np.eye(4)), result_path +  "%02d_pred_s3.nii.gz" % test_step)
-                nib.save(nib.Nifti1Image((preds[0,3]>0.5).astype(np.float32), np.eye(4)), result_path +  "%02d_pred_s4.nii.gz" % test_step)
+                nib.save(nib.Nifti1Image(patch[0, 0].astype(np.float32), np.eye(4)),
+                         result_path + "%02d_image_t1.nii.gz" % test_step)
+                nib.save(nib.Nifti1Image(patch[0, 1].astype(np.float32), np.eye(4)),
+                         result_path + "%02d_image_t1c.nii.gz" % test_step)
+                nib.save(nib.Nifti1Image(patch[0, 2].astype(np.float32), np.eye(4)),
+                         result_path + "%02d_image_t2.nii.gz" % test_step)
+                nib.save(nib.Nifti1Image(masks[0, 0].astype(np.float32), np.eye(4)),
+                         result_path + "%02d_label_a1.nii.gz" % test_step)
+                nib.save(nib.Nifti1Image(masks[0, 1].astype(np.float32), np.eye(4)),
+                         result_path + "%02d_label_a2.nii.gz" % test_step)
+                nib.save(nib.Nifti1Image(masks[0, 2].astype(np.float32), np.eye(4)),
+                         result_path + "%02d_label_a3.nii.gz" % test_step)
+                nib.save(nib.Nifti1Image(masks[0, 3].astype(np.float32), np.eye(4)),
+                         result_path + "%02d_label_a4.nii.gz" % test_step)
+                nib.save(nib.Nifti1Image((preds[0, 0] > 0.5).astype(np.float32), np.eye(4)),
+                         result_path + "%02d_pred_s1.nii.gz" % test_step)
+                nib.save(nib.Nifti1Image((preds[0, 1] > 0.5).astype(np.float32), np.eye(4)),
+                         result_path + "%02d_pred_s2.nii.gz" % test_step)
+                nib.save(nib.Nifti1Image((preds[0, 2] > 0.5).astype(np.float32), np.eye(4)),
+                         result_path + "%02d_pred_s3.nii.gz" % test_step)
+                nib.save(nib.Nifti1Image((preds[0, 3] > 0.5).astype(np.float32), np.eye(4)),
+                         result_path + "%02d_pred_s4.nii.gz" % test_step)
 
     # store in dict
     metrics_dict = {'GED': GED_global / len(test_loader),
@@ -132,7 +155,8 @@ def evaluate(net, test_loader, opt, args, result_path):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", type=str, default='./configs/params_npc.yaml', help="config path (*.yaml)")
-    parser.add_argument("--save_path", type=str, default='../models/DPersona2_TASK2_20240319-152059//', help="save path")
+    parser.add_argument("--save_path", type=str, default='../models/DPersona2_TASK2_20240319-152059//',
+                        help="save path")
     parser.add_argument("--test_num", type=int, default=10)
     parser.add_argument("--model_name", type=str, default='DPersona')
     parser.add_argument("--gpu", type=str, default='0')
@@ -173,4 +197,4 @@ if __name__ == '__main__':
             for record in evaluate_records:
                 temp.append(record[key])
             print('{}: {}±{}'.format(key, np.mean(temp, axis=0), np.std(temp, axis=0, ddof=0)))
-            f.writelines('{}: {}±{} \n'.format(key, np.mean(temp, axis=0), np.std(temp, axis=0, ddof=0))) 
+            f.writelines('{}: {}±{} \n'.format(key, np.mean(temp, axis=0), np.std(temp, axis=0, ddof=0)))

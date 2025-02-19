@@ -10,15 +10,15 @@ from tqdm import tqdm
 import shutil
 import random
 from configs.config import *
-from evaluate_dp_npc import validate
+from evaluate_dp_npc_v2 import validate
 from utils.logger import Logger
 from utils.utils import rand_seed
-from dataloader.dataset import RandomGenerator_Multi_Rater, BaseDataSets, ZoomGenerator
+from dataloader.dataset_v2 import RandomGenerator_Multi_Rater, BaseDataSets, ZoomGenerator
 from torch.utils.data import DataLoader
 from lib.initialize_model import init_model
 from lib.initialize_optimization import init_optimization
 
-config_path = '/home/sajed_hassan/thesis/MMIS/D-Persona/code/configs/params_npc.yaml'
+config_path = '/home/sajed_hassan/thesis/MMIS/D-Persona/code/configs/params_npc_v2.yaml'
 opt = Config(config_path=config_path)
 
 def worker_init_fn(worker_id):
@@ -26,7 +26,7 @@ def worker_init_fn(worker_id):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--config", type=str, default='/home/sajed_hassan/thesis/MMIS/D-Persona/code/configs/params_npc.yaml', help="config path (*.yaml)")
+    parser.add_argument("--config", type=str, default='/home/sajed_hassan/thesis/MMIS/D-Persona/code/configs/params_npc_v2.yaml', help="config path (*.yaml)")
     parser.add_argument("--save_path", type=str, help="save path", default='')
     parser.add_argument("--model_name", type=str, default='DPersona')
     parser.add_argument("--epochs", type=int, default=200)
@@ -93,7 +93,7 @@ def main():
         epoch_start = args.RESUME_FROM
 
     if args.stage == 2:
-        ckpt = torch.load(os.path.join('/home/sajed_hassan/thesis/MMIS/D-Persona/models/DPersona1_NPC_20241111-060635/DPersona1_NPC_best.pth'))
+        ckpt = torch.load(os.path.join('./DPersona1_npc_best.pth'))
         net.load_state_dict(ckpt['model'], strict=False)
 
     net.cuda()

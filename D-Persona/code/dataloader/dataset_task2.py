@@ -60,61 +60,72 @@ class BaseDataSets(Dataset):
         # image_modality_list = ["t1", "t1c", "t2"]
         # image = np.array([h5f[modality][:] for modality in image_modality_list])
 
-        t1_slices_axis_0, t1_slices_axis_1, t1_slices_axis_2 = get_2d_slices_all_axes(t1)
-        ct1_slices_axis_0, ct1_slices_axis_1, ct1_slices_axis_2 = get_2d_slices_all_axes(ct1)
-        t2_slices_axis_0, t2_slices_axis_1, t2_slices_axis_2 = get_2d_slices_all_axes(t2)
-        flair_slices_axis_0, flair_slices_axis_1, flair_slices_axis_2 = get_2d_slices_all_axes(flair)
-        label_slices_axis_0, label_slices_axis_1, label_slices_axis_2 = get_2d_slices_all_axes(label)
-
-        images_axis_0 = combine_to_channels_first(t1_slices_axis_0, ct1_slices_axis_0, t2_slices_axis_0, ct1_slices_axis_0.shape)
-        images_axis_1 = combine_to_channels_first(t1_slices_axis_1, ct1_slices_axis_1, t2_slices_axis_1, ct1_slices_axis_1.shape)
-        images_axis_2 = combine_to_channels_first(t1_slices_axis_2, ct1_slices_axis_2, t2_slices_axis_2, ct1_slices_axis_2.shape)
-
         if self.split == "train":
+            t1_slices_axis_0, t1_slices_axis_1, t1_slices_axis_2 = get_2d_slices_all_axes(t1)
+            ct1_slices_axis_0, ct1_slices_axis_1, ct1_slices_axis_2 = get_2d_slices_all_axes(ct1)
+            t2_slices_axis_0, t2_slices_axis_1, t2_slices_axis_2 = get_2d_slices_all_axes(t2)
+            flair_slices_axis_0, flair_slices_axis_1, flair_slices_axis_2 = get_2d_slices_all_axes(flair)
+            label_slices_axis_0, label_slices_axis_1, label_slices_axis_2 = get_2d_slices_all_axes(label)
+
+            images_axis_0 = combine_to_channels_first(t1_slices_axis_0, ct1_slices_axis_0, t2_slices_axis_0,
+                                                      ct1_slices_axis_0.shape)
+            images_axis_1 = combine_to_channels_first(t1_slices_axis_1, ct1_slices_axis_1, t2_slices_axis_1,
+                                                      ct1_slices_axis_1.shape)
+            images_axis_2 = combine_to_channels_first(t1_slices_axis_2, ct1_slices_axis_2, t2_slices_axis_2,
+                                                      ct1_slices_axis_2.shape)
+
             label_axis_0 = np.array([[l, l, l, l] for l in label_slices_axis_0])
             label_axis_1 = np.array([[l, l, l, l] for l in label_slices_axis_1])
             label_axis_2 = np.array([[l, l, l, l] for l in label_slices_axis_2])
-        # [TODO]: fix this
-        # else:
-        #     label = np.zeros((4, image.shape[1], image.shape[2], image.shape[3]))
-        #     label[0] = h5f["label_a1"][:]
-        #     label[1] = h5f["label_a2"][:]
-        #     label[2] = h5f["label_a3"][:]
-        #     label[3] = h5f["label_a4"][:]
-        try:
-            samples = []
-            for i in range(0, images_axis_0.shape[0]):
-                if (images_axis_0[i] == 0).all():
-                    continue
-                sample = {"image": images_axis_0[i], "label": label_axis_0[i]}
-                sample = self.transform(sample)
-                sample["idx"] = case + '_slice_' + str(i)
-                samples.append(sample)
 
-            for i in range(0, images_axis_1.shape[0]):
-                if (images_axis_1[i] == 0).all():
-                    continue
-                sample = {"image": images_axis_1[i], "label": label_axis_1[i]}
-                sample = self.transform(sample)
-                sample["idx"] = case + '_slice_' + str(i)
-                samples.append(sample)
+            try:
+                samples = []
+                for i in range(0, images_axis_0.shape[0]):
+                    if (images_axis_0[i] == 0).all():
+                        continue
+                    sample = {"image": images_axis_0[i], "label": label_axis_0[i]}
+                    sample = self.transform(sample)
+                    sample["idx"] = case + '_slice_' + str(i)
+                    samples.append(sample)
 
-            for i in range(0, images_axis_2.shape[0]):
-                if (images_axis_2[i] == 0).all():
-                    continue
-                sample = {"image": images_axis_2[i], "label": label_axis_2[i]}
-                sample = self.transform(sample)
-                sample["idx"] = case + '_slice_' + str(i)
-                samples.append(sample)
+                for i in range(0, images_axis_1.shape[0]):
+                    if (images_axis_1[i] == 0).all():
+                        continue
+                    sample = {"image": images_axis_1[i], "label": label_axis_1[i]}
+                    sample = self.transform(sample)
+                    sample["idx"] = case + '_slice_' + str(i)
+                    samples.append(sample)
 
-            if np.array([samples[i]['image'].shape == torch.Size([3, 128, 128]) for i in range(0, len(samples))]).all():
-                return samples
-            else:
-                print('error3')
-                raise 'error3'
-        except Exception as e:
-            print('error2')
-            raise e
+                for i in range(0, images_axis_2.shape[0]):
+                    if (images_axis_2[i] == 0).all():
+                        continue
+                    sample = {"image": images_axis_2[i], "label": label_axis_2[i]}
+                    sample = self.transform(sample)
+                    sample["idx"] = case + '_slice_' + str(i)
+                    samples.append(sample)
+
+                if np.array([samples[i]['image'].shape == torch.Size([3, 128, 128]) for i in range(0, len(samples))]).all():
+                    return samples
+                else:
+                    print('error3')
+                    raise 'error3'
+            except Exception as e:
+                print('error2')
+                raise e
+        else:
+            t1 = t1 if t1.shape == ct1.shape else ct1
+            t2 = t2 if t2.shape == ct1.shape else ct1
+            image = np.array([t1, ct1, t2])
+            label = np.array([label, label, label, label])
+            try:
+                sample = {"image": image, "label": label}
+                sample = self.transform(sample)
+
+                sample["idx"] = case
+                return sample
+            except Exception as e:
+                print('error2')
+                raise e
 
 def random_rot_flip(image, label=None):
     k = np.random.randint(0, 4)

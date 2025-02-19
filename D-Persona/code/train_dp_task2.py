@@ -10,7 +10,7 @@ from tqdm import tqdm
 import shutil
 import random
 from configs.config import *
-from evaluate_dp_npc import validate
+from evaluate_dp_task2 import validate
 from utils.logger import Logger
 from utils.utils import rand_seed
 from dataloader.dataset_task2 import RandomGenerator_Multi_Rater, BaseDataSets, ZoomGenerator
@@ -18,7 +18,7 @@ from torch.utils.data import DataLoader
 from lib.initialize_model import init_model
 from lib.initialize_optimization import init_optimization
 
-config_path = '/Users/sajedalmorsy/Academic/Masters/thesis/D-Persona/D-Persona/code/configs/params_task2.yaml'
+config_path = '/home/sajed_hassan/thesis/MMIS/D-Persona/code/configs/params_task2.yaml'
 opt = Config(config_path=config_path)
 
 def worker_init_fn(worker_id):
@@ -58,7 +58,7 @@ def main():
     logger = Logger(args.model_name, path=opt.MODEL_DIR)
     writer = SummaryWriter(opt.MODEL_DIR)
 
-    code_dir = '/Users/sajedalmorsy/Academic/Masters/thesis/D-Persona/D-Persona/code/'
+    code_dir = '/home/sajed_hassan/thesis/MMIS/D-Persona/code/'
     shutil.copytree(code_dir, opt.MODEL_DIR + '/code/', shutil.ignore_patterns(['.git','__pycache__']))
 
      # dataset
@@ -74,8 +74,8 @@ def main():
         transform=ZoomGenerator(opt.PATCH_SIZE)
     )
 
-    train_loader = DataLoader(db_train, batch_size=opt.TRAIN_BATCHSIZE, shuffle=True, num_workers=8, pin_memory=True, worker_init_fn=worker_init_fn, collate_fn=collate)
-    val_loader = DataLoader(db_val, batch_size=opt.VAL_BATCHSIZE, shuffle=True, num_workers=1, collate_fn=collate)
+    train_loader = DataLoader(db_train, batch_size=opt.TRAIN_BATCHSIZE, shuffle=True, pin_memory=True, worker_init_fn=worker_init_fn, collate_fn=collate)
+    val_loader = DataLoader(db_val, batch_size=opt.VAL_BATCHSIZE, shuffle=True, collate_fn=collate)
 
     # Training Config
     epochs = args.epochs
@@ -99,7 +99,7 @@ def main():
         ckpt = torch.load(os.path.join('./DPersona1_TASK2_best.pth'))
         net.load_state_dict(ckpt['model'], strict=False)
 
-    net.to('mps')
+    net.cuda()
 
     # Training
     best_metric = 0
@@ -113,8 +113,6 @@ def main():
             flattended_samples = [slice for sample in samples for slice in sample]
             batch_size = 12
             for i in range(0, len(flattended_samples), batch_size):
-                if (i % 10 == 0):
-                    print('Step: {} - Batch: {}/{}'.format(_step, i, len(flattended_samples)))
                 if i+batch_size >= len(flattended_samples):
                     continue
                 samples_patch = flattended_samples[i:i+batch_size]
@@ -124,8 +122,8 @@ def main():
                 images = torch.stack(images, dim=0)
                 labels = torch.stack(labels, dim=0)
 
-                patch = images.to('mps')
-                mask = labels.to('mps')
+                patch = images.cuda()
+                mask = labels.cuda()
 
                 # prepare data
                 batches_done = len(train_loader) * epoch + total_step
@@ -135,13 +133,17 @@ def main():
 
                 if torch.isnan(loss):
                     logger.write_and_print('***** Warning: loss is NaN *****')
-                    loss = torch.tensor(10000.0, requires_grad=True).to('mps')
+                    loss = torch.tensor(10000.0, requires_grad=True).cuda()
 
                 loss.backward()
+                torch.nn.utils.clip_grad_norm_(net.parameters(), max_norm=1.0)
                 optimizer.step()
 
                 writer.add_scalar('Loss', loss.item(), batches_done)
                 total_step += 1
+            print('\nStep: {} - Loss: {}'.format(_step, loss.item()))
+            # if _step == 0:
+            #     break
 
         # log learning_rate
         current_lr = optimizer.param_groups[0]['lr']

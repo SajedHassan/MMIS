@@ -3,3 +3,6 @@ venv
 
 # Datasets
 dataset/
+
+# Models
+D-Persona/models

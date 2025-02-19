@@ -7,9 +7,8 @@ from Probabilistic_Unet_Pytorch.utils import init_weights,init_weights_orthogona
 import torch.nn.functional as F
 from torch.distributions import Normal, Independent, kl
 from pionono_models.model_headless import UnetHeadless
-import math
 
-device = torch.device('cuda' if torch.cuda.is_available() else 'mps')
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 class Conv_block(nn.Module):
     def __init__(self, input_channels, num_filters, padding=True):
@@ -156,7 +155,6 @@ class AxisAlignedConvGaussian(nn.Module):
 
         #This is a multivariate normal with diagonal covariance matrix sigma
         #https://github.com/pytorch/pytorch/pull/11178
-        log_sigma = torch.clamp(log_sigma, min=1e-6)
         dist = Independent(Normal(loc=mu, scale=torch.exp(log_sigma)),1)
         return dist
 
@@ -340,39 +338,18 @@ class DPersona(nn.Module):
         """
   
         self.kl = torch.mean(self.kl_divergence(analytic=analytic_kl, calculate_posterior=False))
-        # if math.isnan(self.kl):
-        #     self.kl = torch.tensor(10000.0, requires_grad=True).to('mps')
 
         #Here we use the posterior sample sampled above
         self.re_post = self.posterior_sampling(sample_num=1, training=True)[0]
 
         #Here we use the prior sample sampled above
-        self.re_prior1 = torch.cat(self.prior_sampling(sample_num=args.prior_sample_num, training=True), dim=1)
-        self.re_prior2 = torch.cat(self.prior_sampling(sample_num=args.prior_sample_num, training=True), dim=1)
+        self.re_prior = torch.cat(self.prior_sampling(sample_num=args.prior_sample_num, training=True), dim=1)
 
-        # prior_bound = self.minmax(segm)
-        prior1_pred_max = torch.max(self.re_prior1, dim=1, keepdim=True).values
-        prior1_pred_min = torch.min(self.re_prior1, dim=1, keepdim=True).values
-
-        prior2_pred_max = torch.max(self.re_prior2, dim=1, keepdim=True).values
-        prior2_pred_min = torch.min(self.re_prior2, dim=1, keepdim=True).values
-
-        pred_bound1 = torch.cat([prior1_pred_max, prior1_pred_min],dim=1)
-        pred_bound2 = torch.cat([prior2_pred_max, prior2_pred_min],dim=1)
         prior_bound = self.minmax(segm)
-
-        bound_loss_priors = criterion(pred_bound1, pred_bound2)
-        if math.isnan(bound_loss_priors):
-            bound_loss_priors = 1
-        bound_loss_segm = criterion(pred_bound1, prior_bound)
-        bound_loss = 0.1 * bound_loss_priors + 0.9 * bound_loss_segm
-
-        # self.re_prior = torch.cat(self.prior_sampling(sample_num=args.prior_sample_num, training=True), dim=1)
-        # prior_bound = self.minmax(segm)
-        # prior_pred_max = torch.max(self.re_prior, dim=1, keepdim=True).values
-        # prior_pred_min = torch.min(self.re_prior, dim=1, keepdim=True).values
-        # pred_bound = torch.cat([prior_pred_max, prior_pred_min],dim=1)
-        # bound_loss = criterion(pred_bound, prior_bound)
+        prior_pred_max = torch.max(self.re_prior, dim=1, keepdim=True).values
+        prior_pred_min = torch.min(self.re_prior, dim=1, keepdim=True).values
+        pred_bound = torch.cat([prior_pred_max, prior_pred_min],dim=1)
+        bound_loss = criterion(pred_bound, prior_bound)
 
         random_idx = np.random.randint(0, args.mask_num)
         random_label = segm[:,random_idx].unsqueeze(1)

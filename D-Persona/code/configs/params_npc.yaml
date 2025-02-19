@@ -1,9 +1,18 @@
-DATA_PATH: '/Users/sajedalmorsy/Academic/Masters/thesis/D-Persona/dataset/NPC'
+# DATA_PATH: '/home/sajed_hassan/thesis/MMIS/dataset/GENERATED_NPC/' # 0.35 iou
+# DATA_PATH: '/home/sajed_hassan/thesis/MMIS/dataset/MMIS2024TASK1/'
+# DATA_PATH: /home/sajed_hassan/thesis/MMIS/dataset/GENERATED_NPC_IOU_0
+# DATA_PATH: '/home/sajed_hassan/thesis/MMIS/dataset/GENERATED_NPC_IOU_IMP_35/'
+# DATA_PATH: '/home/sajed_hassan/thesis/MMIS/dataset/GENERATED_NPC_IOU_IMP_45/'
+# DATA_PATH: '/home/sajed_hassan/thesis/MMIS/dataset/GENERATED_NPC_IOU_IMP_55/'
+# DATA_PATH: '/home/sajed_hassan/thesis/MMIS/dataset/GENERATED_NPC_IOU_IMP_100/'
+# DATA_PATH: '/home/sajed_hassan/thesis/MMIS/dataset/GENERATED_NPC_IOU_IMP_100_ORG_2/'
+# DATA_PATH: '/home/sajed_hassan/thesis/MMIS/dataset/GENERATED_NPC_IOU_IMP_100_ORG_2_ONLY/'
+DATA_PATH: '/home/sajed_hassan/thesis/MMIS/dataset/ORG_1_ONLY/'
 DATASET: 'NPC'
 
 RANDOM_SEED: 1337
 
-MODEL_DIR: '/Users/sajedalmorsy/Academic/Masters/thesis/D-Persona/D-Persona/models/'
+MODEL_DIR: '/home/sajed_hassan/thesis/MMIS/D-Persona/models/'
 
 INPUT_CHANNEL: 3
 OUTPUT_CHANNEL: 1

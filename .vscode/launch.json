@@ -5,15 +5,31 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Train (Debug)",
+      "name": "Train step1 (Debug)",
       "type": "debugpy",
       "request": "launch",
-      "program": "./D-Persona/code/train_dp_task2.py",
+      "program": "./D-Persona/code/train_dp_npc.py",
       "console": "integratedTerminal",
       "args": [
         "--stage", "1",
         "--val_num", "10",
-        "--gpu", "0"
+        "--gpu", "0",
+        // "--save_path", "D-Persona/models/DPersona1_splitted_20241013-172202",
+        // "--RESUME_FROM", "30"
+      ]
+    },
+    {
+      "name": "Train step2 (Debug)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "./D-Persona/code/train_dp_npc.py",
+      "console": "integratedTerminal",
+      "args": [
+        "--stage", "2",
+        "--val_num", "100",
+        "--gpu", "0",
+        // "--save_path", "D-Persona/models/DPersona1_splitted_20241013-172202",
+        // "--RESUME_FROM", "30"
       ]
     }
   ]
