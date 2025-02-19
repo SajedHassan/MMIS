@@ -7,6 +7,7 @@ from Probabilistic_Unet_Pytorch.utils import init_weights,init_weights_orthogona
 import torch.nn.functional as F
 from torch.distributions import Normal, Independent, kl
 from pionono_models.model_headless import UnetHeadless
+# from lib.metrics_set import *
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -250,6 +251,7 @@ class DPersona(nn.Module):
             self.unet = UnetHeadless(input_channels).to(device)
 
         self.prior = AxisAlignedConvGaussian(self.input_channels, self.num_filters, self.no_convs_per_block, self.latent_dim,  self.initializers,).to(device)
+        # self.prior = AxisAlignedConvGaussian(self.input_channels, self.num_filters, self.no_convs_per_block, self.latent_dim, self.initializers, posterior=True).to(device)
         self.posterior = AxisAlignedConvGaussian(self.input_channels, self.num_filters, self.no_convs_per_block, self.latent_dim, self.initializers, posterior=True).to(device)
         self.fcomb = Fcomb(self.num_filters, self.latent_dim, self.input_channels, self.num_classes, self.no_convs_fcomb, {'w':'orthogonal', 'b':'normal'}, use_tile=True).to(device)
     
@@ -260,9 +262,12 @@ class DPersona(nn.Module):
         Construct prior latent space for patch and run patch through UNet,
         in case training is True also construct posterior latent space
         """
+        # # if training:
+        # self.posterior_latent_space = self.posterior.forward(patch, segm)
         if training:
             self.posterior_latent_space = self.posterior.forward(patch, segm)
         self.prior_latent_space = self.prior.forward(patch)
+        # self.prior_latent_space = self.prior.forward(patch, segm)
         if self.original_backbone:
             self.unet_features = self.unet.forward(patch, False)
         else:
@@ -343,6 +348,7 @@ class DPersona(nn.Module):
         self.re_post = self.posterior_sampling(sample_num=1, training=True)[0]
 
         #Here we use the prior sample sampled above
+        # self.re_prior = torch.cat(self.posterior_sampling(sample_num=args.prior_sample_num, training=True), dim=1)
         self.re_prior = torch.cat(self.prior_sampling(sample_num=args.prior_sample_num, training=True), dim=1)
 
         prior_bound = self.minmax(segm)
@@ -357,12 +363,19 @@ class DPersona(nn.Module):
         reconstruction_loss = criterion(self.re_post, random_label)
         self.reconstruction_loss = torch.sum(reconstruction_loss)
         self.bound_loss = torch.sum(bound_loss)
+        # return -(self.reconstruction_loss + self.kl + args.beta * self.bound_loss)
+        # self.ged_loss = torch.exp(1 * (generalized_energy_distance_deep_seek(segm, self.re_prior[:,0:4,:,:], criterion)-0.1)) - 1
+        # self.ged_loss = generalized_energy_distance_deep_seek(segm, self.re_prior[:,0:4,:,:], criterion)
         return -(self.reconstruction_loss + self.kl + args.beta * self.bound_loss)
 
     def combined_loss(self, args, labels, loss_fct):
         elbo = self.elbo(args, labels, criterion=loss_fct)
         self.reg_loss = (l2_regularisation(self.posterior) + l2_regularisation(self.prior) + l2_regularisation(self.fcomb.layers)) * self.reg_factor
         loss = -elbo + self.reg_loss
+        # if epoch > 10:
+        #     loss += ged
+
+        # loss = -elbo + self.reg_loss
         return loss
 
     def train_step(self, args, images, masks, loss_fct, stage = 1):
@@ -375,6 +388,11 @@ class DPersona(nn.Module):
             loss = loss_fct(y_preds, masks)
         return loss, y_preds
 
+    # def val_step(self, images, masks, sample_num = 50):
+    #     self.forward(images, masks, training=False)
+    #     y_pred = torch.cat(self.prior_sampling(sample_num=sample_num, training=False), dim=1)
+    #     return y_pred
+
     def val_step(self, images, sample_num = 50):
         self.forward(images, None, training=False)
         y_pred = torch.cat(self.prior_sampling(sample_num=sample_num, training=False), dim=1)
@@ -382,6 +400,7 @@ class DPersona(nn.Module):
 
     def test_step(self, images, sample_num = 100):
         self.forward(images, None, training=False)
+        # z_set = self.get_z_set(self.posterior_latent_space, sample_num=sample_num)
         z_set = self.get_z_set(self.prior_latent_space, sample_num=sample_num)
         zs_expert, samples_expert = [], []
         for idx in range(self.num_experts):

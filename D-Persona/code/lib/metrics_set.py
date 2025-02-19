@@ -167,6 +167,91 @@ def generalized_energy_distance(labels, preds, thresh=0.5, num_classes=2):
 
 	return GED
 
+def generalized_energy_distance_deep_seek(P, Q, distance_fn):
+    """
+    Compute the Generalized Energy Distance (GED) between two sets of samples.
+
+    Args:
+        P (torch.Tensor): Samples from distribution P, shape (n_samples_P, n_features).
+        Q (torch.Tensor): Samples from distribution Q, shape (n_samples_Q, n_features).
+        distance_fn (callable): A distance function (e.g., Euclidean distance).
+
+    Returns:
+        torch.Tensor: The GED value.
+    """
+    # Compute pairwise distances
+    XX = -distance_fn(P, P)  # Distance between samples from P
+    YY = -distance_fn(Q, Q)  # Distance between samples from Q
+    XY = -distance_fn(P, Q)  # Distance between samples from P and Q
+
+    # Compute the GED formula
+    ged = 2 * torch.mean(XY) - torch.mean(XX) - torch.mean(YY)
+    return ged
+
+# Example distance function (Euclidean distance)
+def euclidean_distance(X, Y):
+    """
+    Compute the pairwise Euclidean distance between two sets of samples.
+
+    Args:
+        X (torch.Tensor): Samples, shape (n_samples_X, n_features).
+        Y (torch.Tensor): Samples, shape (n_samples_Y, n_features).
+
+    Returns:
+        torch.Tensor: Pairwise distances, shape (n_samples_X, n_samples_Y).
+    """
+    X_norm = (X**2).sum(dim=1, keepdim=True)  # ||X||^2
+    Y_norm = (Y**2).sum(dim=1, keepdim=True)  # ||Y||^2
+    distances = X_norm + Y_norm.T - 2 * X * Y
+    distances = torch.sqrt(torch.clamp(distances, min=0))  # Ensure non-negative
+    return distances
+
+def iou_with_torch(x, y, axis=-1):
+    smooth = 1e-8
+    intersection = (x & y).sum(dim=axis)
+    union = (x | y).sum(dim=axis) + smooth
+    iou_ = intersection / union
+
+    # Replace NaNs with 1
+    iou_[torch.isnan(iou_)] = 1.0
+    return iou_
+
+# Exclude background
+def distance_with_torch(x, y):
+    try:
+        per_class_iou = iou_with_torch(x[:, None], y[None, :], axis=-2)
+    except RuntimeError:  # PyTorch raises RuntimeError instead of MemoryError
+        per_class_iou = []
+        for x_ in x:
+            per_class_iou.append(iou_with_torch(x_.unsqueeze(0), y[None, :], axis=-2))
+        per_class_iou = torch.cat(per_class_iou)
+
+    return 1 - per_class_iou[..., 1:].mean(dim=-1)
+
+# def calc_generalised_energy_distance_with_torsh(dist_0, dist_1, num_classes):
+#     dist_0 = dist_0.reshape((len(dist_0), -1))
+#     dist_1 = dist_1.reshape((len(dist_1), -1))
+
+#     dist_0 = dist_0.to(torch.long)
+#     dist_1 = dist_1.to(torch.long)
+
+#     eye = torch.eye(num_classes, dtype=torch.bool, device=dist_0.device)
+#     dist_0 = eye[dist_0]
+#     dist_1 = eye[dist_1]
+
+#     cross_distance = torch.mean(distance_with_torch(dist_0, dist_1))
+#     distance_0 = torch.mean(distance_with_torch(dist_0, dist_0))
+#     distance_1 = torch.mean(distance_with_torch(dist_1, dist_1))
+#     return cross_distance, distance_0, distance_1
+
+# # Metrics for Uncertainty
+# def generalized_energy_distance_with_torsh(labels, preds, thresh=0.5, num_classes=2):
+# 	pred_masks = torch.sigmoid(10 * (preds - thresh))
+# 	cross, d_0, d_1 = calc_generalised_energy_distance_with_torsh(labels[0], pred_masks[0], num_classes)
+# 	GED = 2 * cross - d_0 - d_1
+
+# 	return GED
+
 def dice_at_all(labels, preds, thresh=0.5, is_test=False):
     pred_masks = (preds > thresh).float()
     dice_each = []

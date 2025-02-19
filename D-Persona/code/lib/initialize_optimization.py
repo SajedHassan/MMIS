@@ -1,5 +1,6 @@
 import torch
 from torch import nn as nn
+from lib.metrics_set import *
 
 class _AbstractDiceLoss(nn.Module):
     """
@@ -85,7 +86,12 @@ class GeneralizedDiceLoss(_AbstractDiceLoss):
         denominator = (input + target).sum(-1)
         denominator = (denominator * w_l).clamp(min=self.epsilon)
 
-        return 2 * (intersect / denominator)
+        dice_loss = 2 * (intersect / denominator)
+
+        # ged_loss = generalized_energy_distance(input, target)
+
+        # return dice_loss + (- ged_loss)
+        return dice_loss
 
 def init_optimization(model, args):
 

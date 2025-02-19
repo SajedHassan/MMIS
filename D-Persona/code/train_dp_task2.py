@@ -18,7 +18,7 @@ from torch.utils.data import DataLoader
 from lib.initialize_model import init_model
 from lib.initialize_optimization import init_optimization
 
-config_path = '/home/sajed_hassan/thesis/MMIS/D-Persona/code/configs/params_task2.yaml'
+config_path = '/home/sajed/thesis/MMIS/D-Persona/code/configs/params_task2.yaml'
 opt = Config(config_path=config_path)
 
 def worker_init_fn(worker_id):
@@ -58,7 +58,7 @@ def main():
     logger = Logger(args.model_name, path=opt.MODEL_DIR)
     writer = SummaryWriter(opt.MODEL_DIR)
 
-    code_dir = '/home/sajed_hassan/thesis/MMIS/D-Persona/code/'
+    code_dir = '/home/sajed/thesis/MMIS/D-Persona/code/'
     shutil.copytree(code_dir, opt.MODEL_DIR + '/code/', shutil.ignore_patterns(['.git','__pycache__']))
 
      # dataset

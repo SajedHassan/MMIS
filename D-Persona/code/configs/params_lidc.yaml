@@ -1,9 +1,9 @@
-DATA_PATH: '../../dataset/lidc_attributes.pkl'
+DATA_PATH: '/home/sajed/thesis/MMIS/dataset/lidc_attributes.pkl'
 DATASET: 'LIDC'
 
 RANDOM_SEED: 1337
 
-MODEL_DIR: '/home/sajed_hassan/thesis/MMIS/D-Persona/models/'
+MODEL_DIR: '/home/sajed/thesis/MMIS/D-Persona/models/'
 
 INPUT_CHANNEL: 1
 OUTPUT_CHANNEL: 1

@@ -22,7 +22,7 @@ class BaseDataSets(Dataset):
         self.transform = transform
         self.modality = modality
 
-        if self.split == "train":
+        if self.split == "train" or self.split == "gen":
             self.sample_list = os.listdir(self._base_dir + "/training_2d")
         elif self.split == "val":
             self.sample_list = os.listdir(self._base_dir + "/validation")
@@ -35,7 +35,7 @@ class BaseDataSets(Dataset):
 
     def __getitem__(self, idx):
         case = self.sample_list[idx]
-        if self.split == "train":
+        if self.split == "train" or self.split == "gen":
             h5f = h5py.File(self._base_dir +"/training_2d/{}".format(case), "r")
         elif self.split == "val":
             h5f = h5py.File(self._base_dir + "/validation/{}".format(case), "r")
@@ -46,7 +46,7 @@ class BaseDataSets(Dataset):
         image_modality_list = ["t1", "t1c", "t2"]
         image = np.array([h5f[modality][:] for modality in image_modality_list])
         
-        if self.split == "train":
+        if self.split == "train" or self.split == "gen":
             label = np.zeros((4, image.shape[1], image.shape[2]))
             label[0] = h5f["label_a1"][:]
             label[1] = h5f["label_a2"][:]
@@ -152,11 +152,16 @@ class RandomGenerator_Multi_Rater(object):
         return sample
 
 class ZoomGenerator(object):
-    def __init__(self, output_size):
+    def __init__(self, output_size, split = 'test'):
         self.output_size = output_size
+        self.split = split
 
     def __call__(self, sample):
         image, label = sample["image"], sample["label"]
+
+        if self.split == 'gen':
+            image = np.expand_dims(image, axis=1)
+            label = np.expand_dims(label, axis=1)
 
         c, d, x, y = image.shape
 

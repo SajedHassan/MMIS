@@ -1,9 +1,9 @@
-DATA_PATH: '/home/sajed_hassan/thesis/MMIS/dataset/splitted'
+DATA_PATH: '/home/sajed/thesis/MMIS/dataset/splitted'
 DATASET: 'splitted'
 
 RANDOM_SEED: 1337
 
-MODEL_DIR: '/home/sajed_hassan/thesis/MMIS/D-Persona/models/'
+MODEL_DIR: '/home/sajed/thesis/MMIS/D-Persona/models/'
 
 INPUT_CHANNEL: 3
 OUTPUT_CHANNEL: 1

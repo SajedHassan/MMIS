@@ -120,7 +120,7 @@ def evaluate(net, test_loader, opt, args, result_path):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("--config", type=str, default='./configs/params_lidc.yaml', help="config path (*.yaml)")
+    parser.add_argument("--config", type=str, default='/home/sajed/thesis/MMIS/D-Persona/code/configs/params_lidc.yaml', help="config path (*.yaml)")
     parser.add_argument("--save_path", type=str, default='../models/DPersona1_LIDC_20240318-231123/', help="save path")
     parser.add_argument("--test_num", type=int, default=10)
     parser.add_argument("--model_name", type=str, default='DPersona')

@@ -10,15 +10,17 @@ from tqdm import tqdm
 import shutil
 import random
 from configs.config import *
-from evaluate_dp_npc import validate
+from evaluate_dp_npc_no_prior import validate
+# from evaluate_dp_npc import validate
 from utils.logger import Logger
 from utils.utils import rand_seed
-from dataloader.dataset import RandomGenerator_Multi_Rater, BaseDataSets, ZoomGenerator
+from dataloader.dataset_no_prior import RandomGenerator_Multi_Rater, BaseDataSets, ZoomGenerator
+# from dataloader.dataset import RandomGenerator_Multi_Rater, BaseDataSets, ZoomGenerator
 from torch.utils.data import DataLoader
 from lib.initialize_model import init_model
 from lib.initialize_optimization import init_optimization
 
-config_path = '/home/sajed_hassan/thesis/MMIS/D-Persona/code/configs/params_npc.yaml'
+config_path = '/home/sajed/thesis/MMIS/D-Persona/code/configs/params_npc.yaml'
 opt = Config(config_path=config_path)
 
 def worker_init_fn(worker_id):
@@ -26,7 +28,7 @@ def worker_init_fn(worker_id):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--config", type=str, default='/home/sajed_hassan/thesis/MMIS/D-Persona/code/configs/params_npc.yaml', help="config path (*.yaml)")
+    parser.add_argument("--config", type=str, default='/home/sajed/thesis/MMIS/D-Persona/code/configs/params_npc.yaml', help="config path (*.yaml)")
     parser.add_argument("--save_path", type=str, help="save path", default='')
     parser.add_argument("--model_name", type=str, default='DPersona')
     parser.add_argument("--epochs", type=int, default=200)
@@ -56,7 +58,7 @@ def main():
     logger = Logger(args.model_name, path=opt.MODEL_DIR)
     writer = SummaryWriter(opt.MODEL_DIR)
 
-    shutil.copytree('/home/sajed_hassan/thesis/MMIS/D-Persona/code/', opt.MODEL_DIR + '/code/', shutil.ignore_patterns(['.git','__pycache__']))
+    shutil.copytree('/home/sajed/thesis/MMIS/D-Persona/code/', opt.MODEL_DIR + '/code/', shutil.ignore_patterns(['.git','__pycache__']))
 
      # dataset
     db_train = BaseDataSets(
@@ -93,13 +95,17 @@ def main():
         epoch_start = args.RESUME_FROM
 
     if args.stage == 2:
-        ckpt = torch.load(os.path.join('/home/sajed_hassan/thesis/MMIS/D-Persona/models/DPersona1_NPC_20241111-060635/DPersona1_NPC_best.pth'))
+        # ckpt = torch.load(os.path.join('/home/sajed/thesis/MMIS/D-Persona/models/DPersona1_NPC_20241111-060635/DPersona1_NPC_best.pth'))
+        # ckpt = torch.load(os.path.join('/home/sajed/thesis/MMIS/D-Persona/models/DPersona1_NPC_20241102-151012/DPersona1_NPC_best.pth'))
+        # ckpt = torch.load(os.path.join('/home/sajed/thesis/MMIS/D-Persona/models/DPersona1_NPC_20241230-141507/DPersona1_NPC_best.pth')) # original data our split
+        ckpt = torch.load(os.path.join('/home/sajed/thesis/MMIS/D-Persona/models/DPersona1_NPC_20241230-011825/DPersona1_NPC_best.pth')) # Learnable E32 generated data our split
+
         net.load_state_dict(ckpt['model'], strict=False)
 
     net.cuda()
 
     # Training
-    best_metric = 0
+    best_metric = 1
     for epoch in range(epoch_start, epochs):
         net.train()
         print_str = '-------epoch {}/{}-------'.format(epoch+1, epochs)
@@ -114,7 +120,7 @@ def main():
             batches_done = len(train_loader) * epoch + step
             optimizer.zero_grad()
 
-            loss, _ = net.train_step(args, patch, mask, loss_fct, stage=args.stage)
+            loss, _ = net.train_step(args, patch, mask, loss_fct, epoch, stage=args.stage)
 
             if torch.isnan(loss):
                 logger.write_and_print('***** Warning: loss is NaN *****')
@@ -147,13 +153,14 @@ def main():
         logger.write_and_print(print_str)
 
         if args.stage == 1:
-            metric_instance_ = metrics_dict['Dice_match']# + metrics_dict['Dice_soft']
+            # metric_instance_ = metrics_dict['Dice_match']# + metrics_dict['Dice_soft']
+            metric_instance_ = metrics_dict['GED']
         else:
             metric_instance_ = metrics_dict['Dice_each_mean']
         
-        if metric_instance_ >= best_metric:
+        if metric_instance_ <= best_metric:
             best_metric = metric_instance_
-            logger.write_and_print("Best Dice: {}".format(best_metric))
+            logger.write_and_print("Best GED: {}".format(best_metric))
             ckpt = {'model': net.state_dict()}
             torch.save(ckpt, os.path.join(opt.MODEL_DIR, '{}_{}_{}_best.pth'.format(args.model_name, opt.DATASET, epoch)))
             torch.save(ckpt, os.path.join(opt.MODEL_DIR, '{}{}_{}_best.pth'.format(args.model_name, args.stage, opt.DATASET)))

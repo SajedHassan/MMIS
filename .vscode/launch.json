@@ -5,6 +5,31 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "Train other (Debug)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "./D-Persona/code/train_npc.py",
+      "console": "integratedTerminal",
+      "args": [
+        "--model_name", "cm_pixel",
+        // "--save_path", "D-Persona/models/DPersona1_splitted_20241013-172202",
+        // "--RESUME_FROM", "30"
+      ]
+    },
+    {
+      "name": "Train other LIDC-IDRI (Debug)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "./D-Persona/code/train.py",
+      "console": "integratedTerminal",
+      "args": [
+        "--model_name", "prob_unet",
+        "--epochs", "200",
+        // "--save_path", "D-Persona/models/DPersona1_splitted_20241013-172202",
+        // "--RESUME_FROM", "30"
+      ]
+    },
+    {
       "name": "Train step1 (Debug)",
       "type": "debugpy",
       "request": "launch",
@@ -19,16 +44,153 @@
       ]
     },
     {
-      "name": "Train step2 (Debug)",
+      "name": "Train step1 LIDC-IDRI (Debug)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "./D-Persona/code/train_dp.py",
+      "console": "integratedTerminal",
+      "args": [
+        "--stage", "1",
+        "--val_num", "10",
+        "--gpu", "0",
+        // "--save_path", "D-Persona/models/DPersona1_splitted_20241013-172202",
+        // "--RESUME_FROM", "30"
+      ]
+    },
+    {
+      "name": "Train step2 original (Debug)",
       "type": "debugpy",
       "request": "launch",
       "program": "./D-Persona/code/train_dp_npc.py",
       "console": "integratedTerminal",
       "args": [
         "--stage", "2",
+        "--val_num", "10",
+        "--gpu", "0",
+        // "--save_path", "D-Persona/models/DPersona1_splitted_20241013-172202",
+        // "--RESUME_FROM", "30"
+      ]
+    },
+    {
+      "name": "Train step2 original LIDC-IDRI (Debug)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "./D-Persona/code/train_dp.py",
+      "console": "integratedTerminal",
+      "args": [
+        "--stage", "2",
+        "--val_num", "100",
+        "--epochs", "250",
+        "--gpu", "0",
+        // "--save_path", "D-Persona/models/DPersona1_splitted_20241013-172202",
+        // "--RESUME_FROM", "30"
+      ]
+    },
+    {
+      "name": "Train step2 (Debug)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "./D-Persona/code/train_dp_npc_stage2_single_path.py",
+      "console": "integratedTerminal",
+      "args": [
+        "--stage", "2",
         "--val_num", "100",
         "--gpu", "0",
         // "--save_path", "D-Persona/models/DPersona1_splitted_20241013-172202",
+        // "--RESUME_FROM", "30"
+      ]
+    },
+    {
+      "name": "Test step2 (Debug)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "./D-Persona/code/evaluate_dp_npc_stag2_single_path.py",
+      "console": "integratedTerminal",
+      "args": [
+        "--stage", "2",
+        "--test_num", "500",
+        // "--gpu", "0",
+        "--save_path", "D-Persona/models/DPersona2_NPC_20241125-221742",
+        // "--RESUME_FROM", "30"
+      ]
+    },
+    {
+      "name": "Test org step2 (Debug)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "./D-Persona/code/evaluate_dp_npc.py",
+      "console": "integratedTerminal",
+      "args": [
+        "--stage", "2",
+        "--test_num", "100",
+        // "--gpu", "0",
+        "--save_path", "D-Persona/models/DPersona2_NPC_20241231-133942",
+        // "--RESUME_FROM", "30"
+      ]
+    },
+    {
+      "name": "Test org step1 (Debug)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "./D-Persona/code/evaluate_dp_npc.py",
+      "console": "integratedTerminal",
+      "args": [
+        "--stage", "1",
+        "--test_num", "50",
+        // "--gpu", "0",
+        "--save_path", "D-Persona/models/DPersona1_NPC_20241230-141507", // DPersona1_NPC_20241230-141507" NPC STAGE 1 original dataset
+        // "--RESUME_FROM", "30"
+      ]
+    },
+    {
+      "name": "Test org step1 LIDC-IDRI (Debug)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "./D-Persona/code/evaluate_dp.py",
+      "console": "integratedTerminal",
+      "args": [
+        "--stage", "1",
+        "--test_num", "50",
+        // "--gpu", "0",
+        "--save_path", "D-Persona/models/DPersona1_LIDC_20250216-235840",
+        // "--RESUME_FROM", "30"
+      ]
+    },
+    {
+      "name": "Test org step2 LIDC-IDRI (Debug)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "./D-Persona/code/evaluate_dp.py",
+      "console": "integratedTerminal",
+      "args": [
+        "--stage", "2",
+        "--test_num", "500",
+        // "--gpu", "0",
+        "--save_path", "D-Persona/models/DPersona2_LIDC_20250214-152341",
+        // "--RESUME_FROM", "30"
+      ]
+    },
+    {
+      "name": "Test Other (Debug)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "./D-Persona/code/evaluate_npc.py",
+      "console": "integratedTerminal",
+      "args": [
+        "--model_name", "cm_pixel",
+        "--save_path", "D-Persona/models/cm_pixel_NPC_20250204-161024",
+        // "--RESUME_FROM", "30"
+      ]
+    },
+    {
+      "name": "Test Other LIDC-IDRI (Debug)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "./D-Persona/code/evaluate.py",
+      "console": "integratedTerminal",
+      "args": [
+        "--model_name", "prob_unet",
+        "--save_path", "D-Persona/models/prob_unet_LIDC_20250214-222355",
         // "--RESUME_FROM", "30"
       ]
     }

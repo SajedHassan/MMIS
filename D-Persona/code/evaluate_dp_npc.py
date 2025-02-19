@@ -99,7 +99,6 @@ def evaluate(net, test_loader, opt, args, result_path):
                 concat_pred = show_img(patch[:,:,index_z], preds[:,:,index_z], masks[:,:,index_z])
                 cv2.imshow('predictions', concat_pred)
                 cv2.waitKey(0)
-            
             if opt.TEST_SAVE:
                 patch = patch.cpu().numpy()
                 masks = masks.numpy()
@@ -131,7 +130,7 @@ def evaluate(net, test_loader, opt, args, result_path):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("--config", type=str, default='./configs/params_npc.yaml', help="config path (*.yaml)")
+    parser.add_argument("--config", type=str, default='/home/sajed/thesis/MMIS/D-Persona/code/configs/params_npc.yaml', help="config path (*.yaml)")
     parser.add_argument("--save_path", type=str, default='../models/DPersona2_TASK2_20240319-152059//', help="save path")
     parser.add_argument("--test_num", type=int, default=10)
     parser.add_argument("--model_name", type=str, default='DPersona')

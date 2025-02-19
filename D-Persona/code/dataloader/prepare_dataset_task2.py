@@ -1,7 +1,7 @@
 # import os
 #
 # # Specify the directory and the prefix to remove
-# base_dir = '/home/sajed_hassan/thesis/MMIS/dataset/MMIS2024TASK2_train/training/Annotator_all'
+# base_dir = '/home/sajed/thesis/MMIS/dataset/MMIS2024TASK2_train/training/Annotator_all'
 # samples_directories = [f for f in os.listdir(base_dir) if not f.startswith('.')]
 # sub_dataset_source = 'RHUH'
 #
@@ -43,7 +43,7 @@
 # import os
 #
 # # Specify the directory and the prefix to remove
-# base_dir = '/home/sajed_hassan/thesis/MMIS/dataset/MMIS2024TASK2_train/training/Annotator_all'
+# base_dir = '/home/sajed/thesis/MMIS/dataset/MMIS2024TASK2_train/training/Annotator_all'
 # samples_directories = [f for f in os.listdir(base_dir) if not f.startswith('.')]
 # sub_dataset_source = 'UPENN-GBM-00134_21'
 #
@@ -80,7 +80,7 @@
 # import os
 
 # # Specify the directory and the prefix to remove
-# base_dir = '/home/sajed_hassan/thesis/MMIS/dataset/MMIS2024TASK2_train/training/Annotator_all'
+# base_dir = '/home/sajed/thesis/MMIS/dataset/MMIS2024TASK2_train/training/Annotator_all'
 # samples_directories = [f for f in os.listdir(base_dir) if not f.startswith('.')]
 # sub_dataset_source = ''
 
@@ -98,7 +98,7 @@
 # import h5py
 # import re
 
-# base_dir = '/home/sajed_hassan/thesis/MMIS/dataset/splitted/validation_v2'
+# base_dir = '/home/sajed/thesis/MMIS/dataset/splitted/validation_v2'
 # slices = [f for f in os.listdir(base_dir) if not f.startswith('.')]
 
 # print(len(slices))
@@ -130,17 +130,17 @@
 # import re
 # from PIL import Image
 
-# src_dir = '/home/sajed_hassan/thesis/stargan-v2/expr/results/90000/a0_to_a0/'
-# target_dir = '/home/sajed_hassan/thesis/MMIS/dataset/splitted/training_2d_v2_star/'
+# src_dir = '/home/sajed/thesis/stargan-v2/expr/results/90000/a0_to_a0/'
+# target_dir = '/home/sajed/thesis/MMIS/dataset/splitted/training_2d_v2_star/'
 # image_files = [f for f in os.listdir(src_dir) if not f.startswith('.')]
 
 # # print(len(slices))
 # # index = 0
 # for image_file in image_files:
-#   img1_path = '/home/sajed_hassan/thesis/stargan-v2/expr/results/90000/a0_to_a0/' + image_file
-#   img2_path = '/home/sajed_hassan/thesis/stargan-v2/expr/results/90000/a0_to_a1/' + image_file
-#   img3_path = '/home/sajed_hassan/thesis/stargan-v2/expr/results/90000/a0_to_a2/' + image_file
-#   img4_path = '/home/sajed_hassan/thesis/stargan-v2/expr/results/90000/a0_to_a3/' + image_file
+#   img1_path = '/home/sajed/thesis/stargan-v2/expr/results/90000/a0_to_a0/' + image_file
+#   img2_path = '/home/sajed/thesis/stargan-v2/expr/results/90000/a0_to_a1/' + image_file
+#   img3_path = '/home/sajed/thesis/stargan-v2/expr/results/90000/a0_to_a2/' + image_file
+#   img4_path = '/home/sajed/thesis/stargan-v2/expr/results/90000/a0_to_a3/' + image_file
 
 #   img1 = Image.open(img1_path)
 #   img2 = Image.open(img1_path)
@@ -171,7 +171,7 @@ import numpy as np
 import h5py
 import re
 
-base_dir = '/home/sajed_hassan/thesis/MMIS/dataset/GENERATED_NPC/validation/'
+base_dir = '/home/sajed/thesis/MMIS/dataset/GENERATED_NPC/validation/'
 samples_files = [f for f in os.listdir(base_dir) if not f.startswith('.')]
 
 # print(len(slices))
